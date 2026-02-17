@@ -21,6 +21,7 @@ export type Database = {
           english_sentence: string
           english_word: string
           id: string
+          jlpt: string
           reading_sentence: string
           reading_word: string
           sentence: string
@@ -36,6 +37,7 @@ export type Database = {
           english_sentence?: string
           english_word?: string
           id?: string
+          jlpt: string
           reading_sentence?: string
           reading_word?: string
           sentence?: string
@@ -51,6 +53,7 @@ export type Database = {
           english_sentence?: string
           english_word?: string
           id?: string
+          jlpt?: string
           reading_sentence?: string
           reading_word?: string
           sentence?: string
