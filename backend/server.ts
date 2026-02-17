@@ -35,14 +35,9 @@ const TATOEBA_API = "https://api.tatoeba.org/"
 app.post('/getData', async (req, res) => {
   try {
     const jishoRes = await fetch(`${JISHO_API}=${req.body.word}`)
-    const jishoParsed = await jishoRes.json()
+    const jishoParsed = await jishoRes.json();
+    console.log(jishoParsed)
     res.json(jishoParsed)
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'something went wrong' })
-  }
-  try {
-    
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'something went wrong' })
