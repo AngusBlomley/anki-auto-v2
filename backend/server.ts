@@ -49,10 +49,9 @@ app.post("/getData", async (req, res) => {
     const tatoebaObj: Tatoeba = tatoebaParsed.data[0];
 
     // Parse tatoeba furigana to hiragana. e.g. "お[前|まえ]はバナナ[人|じん]だ。" **REVISE**
-    const readingSentence = tatoebaObj.transcriptions[0].text.replace(
-      /\[.+?\|(.+?)\]/g,
-      "$1",
-    );
+    const readingSentence = tatoebaObj.transcriptions[0].text
+      .replace(/\[.+?\|(.+?)\]/g, "$1")
+      .replace(/\|/g, "");
 
     const [ttsResWord] = await ttsClient.synthesizeSpeech({
       input: { text: jishoObj.japanese[0].reading },
