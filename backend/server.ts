@@ -34,6 +34,26 @@ const TATOEBA_API = "https://api.tatoeba.org";
 // 1. If a user types one kanji it can have many meanings, e.g. (空 → から、そら)
 // Ans: Show all multiple word and sentence meanings
 
+// Get TTS helper function
+const synthesize = async (ttsText: string) => {
+  const [ttsRes] = await ttsClient.synthesizeSpeech({
+    input: { text: ttsText },
+    voice: {
+      languageCode: "ja-JP",
+      name: "ja-JP-Neural2-B",
+    },
+    audioConfig: {
+      audioEncoding: "MP3",
+    },
+  });
+  
+  const audio =  Buffer.from(
+    ttsRes.audioContent as Uint8Array,
+  ).toString("base64");
+  
+  return audio;
+}
+
 app.post("/getData", async (req, res) => {
   try {
     // Get Jisho
@@ -46,51 +66,22 @@ app.post("/getData", async (req, res) => {
     const tatoebaParsed = await tatoebaRes.json();
     const tatoebaObj: Tatoeba = tatoebaParsed.data[0];
     
-    // Get TTS // TODO: Eliminate DRY code
-    const [ttsResWord] = await ttsClient.synthesizeSpeech({
-      input: { text: jishoObj.japanese[0].reading },
-      voice: {
-        languageCode: "ja-JP",
-        name: "ja-JP-Neural2-B",
-      },
-      audioConfig: {
-        audioEncoding: "MP3",
-      },
-    });
-
-    const [ttsResSentence] = await ttsClient.synthesizeSpeech({
-      input: { text: tatoebaObj.text },
-      voice: {
-        languageCode: "ja-JP",
-        name: "ja-JP-Neural2-B",
-      },
-      audioConfig: {
-        audioEncoding: "MP3",
-      },
-    });
-    
+    //Get TTS
+    const audioWord = await synthesize(jishoObj.japanese[0].reading);
+    const audioSentence = await synthesize(tatoebaObj.text);
+        
     // Format Data
     const cleanWord = jishoObj.japanese[0].word;
+    const cleanEnSentence = tatoebaObj.translations[0].text;
+    const cleanJlpt = jishoObj.jlpt.join(", ");
+    const cleanReadingWord = jishoObj.japanese[0].reading;
     
     // - Capitalise en definitions
     const sliceEnWords = jishoObj.senses[0].english_definitions.slice(0,2);
     const cleanEnWords = sliceEnWords.map((c) => c[0].toUpperCase() + c.slice(1)).join(", ");
     
-    const cleanEnSentence = tatoebaObj.translations[0].text;
-    const cleanJlpt = jishoObj.jlpt.join(", ");
-    const cleanReadingWord = jishoObj.japanese[0].reading;
-    
     // - Parse tatoeba furigana to hiragana. e.g. "お[前|まえ]はバナナ[人|じん]だ。" **REVISE**
     const cleanReadingSentence = tatoebaObj.transcriptions[0].text.replace(/\[.+?\|(.+?)\]/g, "$1").replace(/\|/g, "");
-
-    // - Convert TTS to base64 string
-    const audioWord = Buffer.from(
-      ttsResWord.audioContent as Uint8Array,
-    ).toString("base64");
-
-    const audioSentence = Buffer.from(
-      ttsResSentence.audioContent as Uint8Array,
-    ).toString("base64");
 
     const builtResponse: TablesInsert<"card"> = {
       word: cleanWord,
