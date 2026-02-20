@@ -26,13 +26,14 @@ export default function App() {
 
       const wordData: Word = await response.json();
 
-      // Split one word into 4 cards, each with a different study type
+      // Derive all the word data we get from the getData response into 4 card types
       const cards: TablesInsert<"card">[] = [
         { ...wordData, type: "listen" },
         { ...wordData, type: "word" },
         { ...wordData, type: "sentence" },
         { ...wordData, type: "recall" },
       ];
+      
       setCards(cards);
       setFlipped(new Array(cards.length).fill(false));
       setWords((prev) => [...prev, { ...wordData }]);
