@@ -4,6 +4,7 @@ import { Play } from "lucide-react";
 
 interface CardProps {
   wordData: TablesInsert<"card">;
+  cardType: string;
 }
 
 const PlayButton = ({ playAudio }: { playAudio: () => void }) => {
@@ -17,12 +18,12 @@ const PlayButton = ({ playAudio }: { playAudio: () => void }) => {
   );
 };
 
-function Card({ wordData }: CardProps) {
+function Card({ wordData, cardType }: CardProps) {
   const [flipped, setFlipped] = useState(false);
 
   const playAudio = () => {
     const url =
-      wordData.type === "sentence"
+      cardType === "sentence"
         ? wordData.sentence_audio_url!
         : wordData.word_audio_url!;
     const audio = new Audio(`data:audio/mp3;base64,${url}`);
@@ -32,10 +33,10 @@ function Card({ wordData }: CardProps) {
   return (
     <div className="relative flex bg-[#141414] border border-[#404040] rounded-md min-h-82 max-w-82">
       <div className="absolute flex justify-center text-xs text-gray-300 top-0 w-full rounded-t-md align-top p-2 border-b border-[#404040]">
-        {wordData.type?.toUpperCase()}
+        {cardType?.toUpperCase()}
       </div>
-      <div className="flex flex-col items-center space-y-4 px-4 w-full h-96 py-10 text-center">
-        {wordData.type === "listening" && (
+      <div className="flex flex-col items-center space-y-4 px-4 w-full min-h-96 py-10 text-center">
+        {cardType === "listening" && (
           <>
             <div className="mt-5">
               <PlayButton playAudio={playAudio} />
@@ -54,7 +55,7 @@ function Card({ wordData }: CardProps) {
           </>
         )}
 
-        {wordData.type === "word" && (
+        {cardType === "word" && (
           <>
             <p className="mt-5">{wordData.word}</p>
             {flipped && (
@@ -72,7 +73,7 @@ function Card({ wordData }: CardProps) {
           </>
         )}
 
-        {wordData.type === "sentence" && (
+        {cardType === "sentence" && (
           <>
             <p className="mt-5">{wordData.sentence}</p>
             {flipped && (
@@ -94,7 +95,7 @@ function Card({ wordData }: CardProps) {
           </>
         )}
 
-        {wordData.type === "recall" && (
+        {cardType === "recall" && (
           <>
             <p className="mt-5">{wordData.english_word}</p>
             {flipped && (

@@ -2,7 +2,6 @@ import textToSpeech from "@google-cloud/text-to-speech";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-
 import type { TablesInsert } from "../src/types/supabase";
 
 dotenv.config();
@@ -29,14 +28,6 @@ interface Tatoeba {
 // API URLS
 const JISHO_API = "https://jisho.org/api/v1/search/words?keyword=";
 const TATOEBA_API = "https://api.tatoeba.org";
-
-// TODO: Features:
-// Allow the user to add an array of strings to batch calls
-// Make Endpoint return and array of objects, not just 1 object.
-
-// TODO: Edge cases:
-// 1. If a user types one kanji it can have many meanings, e.g. (空 → から、そら)
-// Ans: Show all multiple word and sentence meanings
 
 // Get TTS helper function
 const synthesize = async (ttsText: string) => {
@@ -80,17 +71,18 @@ app.post("/getData", async (req, res) => {
     const cleanJlpt = jishoObj.jlpt.join(", ");
     const cleanReadingWord = jishoObj.japanese[0].reading;
     
-    // - Capitalise en definitions
-    const sliceEnWords = jishoObj.senses[0].english_definitions.slice(0,2);
-    const cleanEnWords = sliceEnWords.map((c) => c[0].toUpperCase() + c.slice(1)).join(", ");
+    // TODO: Study Regex
+    // - Convert from array to single string, capitolise the word
+    const getFirstDef = jishoObj.senses[0].english_definitions[0];
+    const cleanEnWord = getFirstDef.slice(0, 1).toUpperCase() + getFirstDef.slice(1).replace(/\s*\([^)]*\)/, '');
     
-    // - Parse tatoeba furigana to hiragana. e.g. "お[前|まえ]はバナナ[人|じん]だ。" **REVISE**
+    // - Parse tatoeba furigana to hiragana. e.g. "お[前|まえ]はバナナ[人|じん]だ。"
     const cleanReadingSentence = tatoebaObj.transcriptions[0].text.replace(/\[.+?\|(.+?)\]/g, "$1").replace(/\|/g, "");
 
     const builtResponse: TablesInsert<"card"> = {
       word: cleanWord,
       reading_word: cleanReadingWord,
-      english_word: cleanEnWords,
+      english_word: cleanEnWord,
       sentence: tatoebaObj.text,
       reading_sentence: cleanReadingSentence,
       english_sentence: cleanEnSentence,

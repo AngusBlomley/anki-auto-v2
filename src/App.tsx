@@ -7,11 +7,18 @@ import type { TablesInsert } from "./types/supabase";
 import { X } from "lucide-react";
 
 export default function App() {
-  const [wordData, setWordData] = useState<TablesInsert<"card"> | null>(null);
+  const [wordData, setWordData] = useState<TablesInsert<"card">[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  // TODO: Update input to take an array of strings for batch calls.
+  // TODO'S:
+  // 1. Add error handling so no api calls are wasted.
+  // 2. Update input to take an array of strings for batch calls.
+  // 2. Debounce the audio button for the length of the audio playing.
+
+  // BUGS:
+  // 1. Handle case where nothing is returned.
+  // 2. Only show 1 group of 4 cards per time.
 
   const onSubmit = async (userInput: string) => {
     setLoading(true);
@@ -22,8 +29,7 @@ export default function App() {
         body: JSON.stringify({ word: userInput }),
       });
       const wordDataRes = await response.json();
-      setWordData(wordDataRes);
-      console.log(wordData);
+      setWordData((prev) => [...prev, { ...wordDataRes }]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -57,7 +63,7 @@ export default function App() {
         <div className="flex justify-center">
           {loading ? (
             <Spinner />
-          ) : (
+          ) : wordData.length > 0 ? (
             <div>
               <div className="flex justify-between pb-4 min-w-xl">
                 <h2 className="text-xl">Preview</h2>
@@ -66,13 +72,18 @@ export default function App() {
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-y-4 gap-x-8">
-                {wordData &&
-                  ["listening", "word", "sentence", "recall"].map((type) => (
-                    <Card key={type} wordData={{ ...wordData, type }} />
-                  ))}
+                {["listening", "word", "sentence", "recall"].map(
+                  (cardType, i) => (
+                    <Card
+                      key={i}
+                      wordData={wordData.at(-1)!}
+                      cardType={cardType}
+                    />
+                  ),
+                )}
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* List of words */}
@@ -88,14 +99,14 @@ export default function App() {
               </tr>
             </thead>
             <tbody>
-              {/*{cards.map((word, i) => (
-                <tr key={i} className="border-b border-[#404040]">
+              {wordData.map((word) => (
+                <tr className="border-b border-[#404040]">
                   <td className="p-1">{word.word}</td>
                   <td>{word.reading_word}</td>
                   <td>{word.english_word}</td>
                   <td></td>
                 </tr>
-              ))}*/}
+              ))}
             </tbody>
           </table>
         </div>
