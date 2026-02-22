@@ -30,6 +30,10 @@ interface Tatoeba {
 const JISHO_API = "https://jisho.org/api/v1/search/words?keyword=";
 const TATOEBA_API = "https://api.tatoeba.org";
 
+// TODO: Features:
+// Allow the user to add an array of strings to batch calls
+// Make Endpoint return and array of objects, not just 1 object.
+
 // TODO: Edge cases:
 // 1. If a user types one kanji it can have many meanings, e.g. (空 → から、そら)
 // Ans: Show all multiple word and sentence meanings
