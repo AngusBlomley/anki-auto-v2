@@ -41,43 +41,51 @@ const synthesize = async (ttsText: string) => {
       audioEncoding: "MP3",
     },
   });
-  
-  const audio =  Buffer.from(
-    ttsRes.audioContent as Uint8Array,
-  ).toString("base64");
-  
+
+  const audio = Buffer.from(ttsRes.audioContent as Uint8Array).toString(
+    "base64",
+  );
+
   return audio;
-}
+};
 
 app.post("/getData", async (req, res) => {
   try {
-    // Get Jisho
+    // Get Jisho (Word)
     const jishoRes = await fetch(`${JISHO_API}${req.body.word}`);
     const jishoParsed = await jishoRes.json();
     const jishoObj: Jisho = jishoParsed.data[0];
 
-    // Get Tateoba
-    const tatoebaRes = await fetch(`${TATOEBA_API}/v1/sentences?q=${req.body.word}&lang=jpn&sort=relevance&showtrans:lang=eng&include=transcriptions`,);
+    // TODO: Add an OpenAI api fallback for the sentence if Tatoeba fails to return a sentence.
+    // TODO: Randomise the response instead of always getting the first sentence.
+    // Get Tateoba (Sentence)
+    const tatoebaRes = await fetch(
+      `${TATOEBA_API}/v1/sentences?q=${req.body.word}&lang=jpn&sort=relevance&showtrans:lang=eng&include=transcriptions`,
+    );
     const tatoebaParsed = await tatoebaRes.json();
     const tatoebaObj: Tatoeba = tatoebaParsed.data[0];
-    
+
     //Get TTS
     const audioWord = await synthesize(jishoObj.japanese[0].reading);
     const audioSentence = await synthesize(tatoebaObj.text);
-        
+
     // Format Data
     const cleanWord = jishoObj.japanese[0].word;
     const cleanEnSentence = tatoebaObj.translations[0].text;
     const cleanJlpt = jishoObj.jlpt.join(", ");
     const cleanReadingWord = jishoObj.japanese[0].reading;
-    
+
     // TODO: Study Regex
     // - Convert from array to single string, capitolise the word
     const getFirstDef = jishoObj.senses[0].english_definitions[0];
-    const cleanEnWord = getFirstDef.slice(0, 1).toUpperCase() + getFirstDef.slice(1).replace(/\s*\([^)]*\)/, '');
-    
+    const cleanEnWord =
+      getFirstDef.slice(0, 1).toUpperCase() +
+      getFirstDef.slice(1).replace(/\s*\([^)]*\)/, "");
+
     // - Parse tatoeba furigana to hiragana. e.g. "お[前|まえ]はバナナ[人|じん]だ。"
-    const cleanReadingSentence = tatoebaObj.transcriptions[0].text.replace(/\[.+?\|(.+?)\]/g, "$1").replace(/\|/g, "");
+    const cleanReadingSentence = tatoebaObj.transcriptions[0].text
+      .replace(/\[.+?\|(.+?)\]/g, "$1")
+      .replace(/\|/g, "");
 
     const builtResponse: TablesInsert<"card"> = {
       word: cleanWord,

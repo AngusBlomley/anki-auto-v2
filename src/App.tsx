@@ -13,8 +13,7 @@ export default function App() {
   const [error, setError] = useState<string>("");
 
   // TODO'S:
-  // 1. Add error handling so no api calls are wasted.
-  // 2. Debounce the audio button for the length of the audio playing.
+  // 1. Debounce the audio button for the length of the audio playing.
 
   // convert the input into and array of strings split by en or jp commas
 
