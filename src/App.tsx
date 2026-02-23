@@ -10,30 +10,50 @@ export default function App() {
   const [wordData, setWordData] = useState<TablesInsert<"card">[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   // TODO'S:
   // 1. Add error handling so no api calls are wasted.
-  // 2. Update input to take an array of strings for batch calls.
   // 2. Debounce the audio button for the length of the audio playing.
 
-  // BUGS:
-  // 1. Handle case where nothing is returned.
-  // 2. Only show 1 group of 4 cards per time.
+  // convert the input into and array of strings split by en or jp commas
 
   const onSubmit = async (userInput: string) => {
-    setLoading(true);
-    try {
-      const response = await fetch("http://localhost:3000/getData", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word: userInput }),
-      });
-      const wordDataRes = await response.json();
-      setWordData((prev) => [...prev, { ...wordDataRes }]);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+    // Array Conversion
+    const arr = userInput.split(/[,、]/);
+
+    // Japanese Regex
+    const isJapanese = /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\s,、]+$/.test(
+      userInput,
+    );
+
+    // Form Validation
+    if (!isJapanese || userInput === "") {
+      setError("Please enter valid Japanese words and try again..");
+      return;
+    }
+
+    if (arr.length > 1000) {
+      setError("Exceeded limit of 1000 words..");
+    }
+
+    setError("");
+
+    for (let i = 0; i < arr.length; i++) {
+      setLoading(true);
+      try {
+        const response = await fetch("http://localhost:3000/getData", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ word: arr[i] }),
+        });
+        const wordDataRes = await response.json();
+        setWordData((prev) => [...prev, { ...wordDataRes }]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -45,14 +65,17 @@ export default function App() {
         <div></div>
 
         <div className="flex justify-center gap-2">
-          <input
-            type="text"
-            placeholder="Japanese words, E.G: 食べ物、魚、青い"
-            className="p-2 bg-[#171717] border border-[#404040] rounded min-w-md"
-            onChange={(e) => setInput(e.target.value)}
-          />
+          <div className="flex flex-col">
+            <input
+              type="text"
+              placeholder="食べ物、寿司、美味し"
+              className="p-2 bg-[#171717] border border-[#404040] rounded min-w-md"
+              onChange={(e) => setInput(e.target.value)}
+            />
+            {error && <span className="p-2 text-red-400">{error}</span>}
+          </div>
           <button
-            className="p-2 rounded cursor-pointer hover:bg-gray-200 bg-white text-black"
+            className="p-2 max-h-10 rounded cursor-pointer hover:bg-gray-200 bg-white text-black"
             onClick={() => onSubmit(input)}
           >
             Generate Cards
@@ -99,8 +122,8 @@ export default function App() {
               </tr>
             </thead>
             <tbody>
-              {wordData.map((word) => (
-                <tr className="border-b border-[#404040]">
+              {wordData.map((word, i) => (
+                <tr key={i} className="border-b border-[#404040]">
                   <td className="p-1">{word.word}</td>
                   <td>{word.reading_word}</td>
                   <td>{word.english_word}</td>
