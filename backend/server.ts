@@ -56,6 +56,7 @@ app.post("/getData", async (req, res) => {
     const jishoParsed = await jishoRes.json();
     const jishoObj: Jisho = jishoParsed.data[0];
 
+    // TODO: Tatoeba sometimes responds with a word not a sentence...
     // TODO: Add an OpenAI api fallback for the sentence if Tatoeba fails to return a sentence.
     // TODO: Randomise the response instead of always getting the first sentence.
     // Get Tateoba (Sentence)

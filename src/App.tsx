@@ -11,15 +11,15 @@ export default function App() {
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [serverError, setServerError] = useState<Error | null>(null);
 
   // TODO'S:
-  // 1. Debounce the audio button for the length of the audio playing.
 
   // convert the input into and array of strings split by en or jp commas
 
   const onSubmit = async (userInput: string) => {
     // Array Conversion
-    const arr = userInput.split(/[,、]/);
+    const arr = userInput.split(/[,、]/).map((w) => w.trim());
 
     // Japanese Regex
     const isJapanese = /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\s,、]+$/.test(
@@ -27,19 +27,22 @@ export default function App() {
     );
 
     // Form Validation
-    if (!isJapanese || userInput === "") {
+    if (!isJapanese) {
       setError("Please enter valid Japanese words and try again..");
       return;
     }
 
+    // Max Word Limit
     if (arr.length > 1000) {
       setError("Exceeded limit of 1000 words..");
+      return;
     }
 
     setError("");
+    setServerError(null);
+    setLoading(true);
 
     for (let i = 0; i < arr.length; i++) {
-      setLoading(true);
       try {
         const response = await fetch("http://localhost:3000/getData", {
           method: "POST",
@@ -49,6 +52,11 @@ export default function App() {
         const wordDataRes = await response.json();
         setWordData((prev) => [...prev, { ...wordDataRes }]);
       } catch (error) {
+        setServerError(
+          error instanceof Error
+            ? error
+            : new Error("An error occurred, try again.."),
+        );
         console.error(error);
       } finally {
         setLoading(false);
@@ -106,32 +114,34 @@ export default function App() {
               </div>
             </div>
           ) : null}
+          {serverError && <span>{serverError.message}</span>}
         </div>
 
         {/* List of words */}
-
-        <div className="flex justify-center w-full">
-          <table className="min-w-xl text-left">
-            <thead>
-              <tr className="border-b border-[#404040]">
-                <th className="p-1">Word</th>
-                <th>Reading</th>
-                <th>Translation</th>
-                <th>Manage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {wordData.map((word, i) => (
-                <tr key={i} className="border-b border-[#404040]">
-                  <td className="p-1">{word.word}</td>
-                  <td>{word.reading_word}</td>
-                  <td>{word.english_word}</td>
-                  <td></td>
+        {wordData.length > 0 && (
+          <div className="flex justify-center w-full">
+            <table className="min-w-xl text-left">
+              <thead>
+                <tr className="border-b border-[#404040]">
+                  <th className="p-1">Word</th>
+                  <th>Reading</th>
+                  <th>Translation</th>
+                  <th>Manage</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {wordData.map((word, i) => (
+                  <tr key={i} className="border-b border-[#404040]">
+                    <td className="p-1">{word.word}</td>
+                    <td>{word.reading_word}</td>
+                    <td>{word.english_word}</td>
+                    <td></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </>
   );

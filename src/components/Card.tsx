@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { TablesInsert } from "../types/supabase";
 import { Play } from "lucide-react";
 
@@ -7,10 +7,16 @@ interface CardProps {
   cardType: string;
 }
 
-const PlayButton = ({ playAudio }: { playAudio: () => void }) => {
+interface PlayButtonProps {
+  playAudio: () => void;
+  isPlaying: boolean;
+}
+
+const PlayButton = ({ playAudio, isPlaying }: PlayButtonProps) => {
   return (
     <button
       className="cursor-pointer rounded-full h-9 w-9 p-2 bg-gray-300 hover:bg-gray-400"
+      disabled={isPlaying}
       onClick={playAudio}
     >
       <Play color="black" fill="black" size={21} />
@@ -20,14 +26,22 @@ const PlayButton = ({ playAudio }: { playAudio: () => void }) => {
 
 function Card({ wordData, cardType }: CardProps) {
   const [flipped, setFlipped] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const playAudio = () => {
     const url =
       cardType === "sentence"
         ? wordData.sentence_audio_url!
         : wordData.word_audio_url!;
-    const audio = new Audio(`data:audio/mp3;base64,${url}`);
-    audio.play();
+
+    audioRef.current = new Audio(`data:audio/mp3;base64,${url}`);
+    setIsPlaying(true);
+    audioRef.current.play();
+    audioRef.current.addEventListener("ended", () => {
+      setIsPlaying(false);
+    });
   };
 
   return (
@@ -39,7 +53,7 @@ function Card({ wordData, cardType }: CardProps) {
         {cardType === "listening" && (
           <>
             <div className="mt-5">
-              <PlayButton playAudio={playAudio} />
+              <PlayButton playAudio={playAudio} isPlaying={isPlaying} />
             </div>
             {flipped && (
               <>
@@ -62,7 +76,7 @@ function Card({ wordData, cardType }: CardProps) {
               <>
                 <div className="border-b w-3/4 opacity-35 py-2"></div>
                 <div className="flex flex-col py-2 items-center space-y-2">
-                  <PlayButton playAudio={playAudio} />
+                  <PlayButton playAudio={playAudio} isPlaying={isPlaying} />
                   <p className="mt-2">
                     <strong>{wordData.word}</strong> - {wordData.reading_word}
                   </p>
@@ -80,7 +94,7 @@ function Card({ wordData, cardType }: CardProps) {
               <>
                 <div className="border-b w-3/4 opacity-35 py-2"></div>
                 <div className="flex flex-col py-2 items-center space-y-2">
-                  <PlayButton playAudio={playAudio} />
+                  <PlayButton playAudio={playAudio} isPlaying={isPlaying} />
                   <p className="flex flex-col space-y-1 mt-2 text-center">
                     <span>{wordData.reading_sentence}</span>
                     <span>{wordData.english_sentence}</span>
@@ -102,7 +116,7 @@ function Card({ wordData, cardType }: CardProps) {
               <>
                 <div className="border-b w-3/4 opacity-35 py-2"></div>
                 <div className="flex flex-col py-2 items-center space-y-2">
-                  <PlayButton playAudio={playAudio} />
+                  <PlayButton playAudio={playAudio} isPlaying={isPlaying} />
                   <p className="mt-2">
                     <strong>{wordData.word}</strong> - {wordData.reading_word}
                   </p>
