@@ -60,8 +60,9 @@ app.post("/getData", async (req, res) => {
     // TODO: Add an OpenAI api fallback for the sentence if Tatoeba fails to return a sentence.
     // TODO: Randomise the response instead of always getting the first sentence.
     // Get Tateoba (Sentence)
+    const resolvedWord = jishoObj.japanese[0].word || jishoObj.japanese[0].reading;
     const tatoebaRes = await fetch(
-      `${TATOEBA_API}/v1/sentences?q=${req.body.word}&lang=jpn&sort=relevance&showtrans:lang=eng&include=transcriptions`,
+      `${TATOEBA_API}/v1/sentences?q=${resolvedWord}&lang=jpn&sort=relevance&showtrans:lang=eng&include=transcriptions`,
     );
     const tatoebaParsed = await tatoebaRes.json();
     const tatoebaObj: Tatoeba = tatoebaParsed.data[0];
