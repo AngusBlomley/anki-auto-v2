@@ -6,10 +6,13 @@ import Card from "./components/Card";
 import type { TablesInsert } from "./types/supabase";
 import { X } from "lucide-react";
 
-// TODO: 
+// TODO: Create the decks state for storing the wordData from the supabase
+// TODO: Allow user to click on words to display it in the preview.
 
 export default function App() {
+  // const [decks, setDecks] = useState<TablesInsert<"deck">[]>([]);
   const [wordData, setWordData] = useState<TablesInsert<"card">[]>([]);
+  const [preview, setPreview] = useState<number>(-1);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -76,7 +79,7 @@ export default function App() {
       <div className="flex flex-col space-y-10 justify-center py-10">
         <Header />
         {/* Deck selection */}
-        <div></div>
+        <div className="flex justify-center gap-2"></div>
 
         <div className="flex justify-center gap-2">
           <div className="flex flex-col">
@@ -112,7 +115,7 @@ export default function App() {
                   (cardType, i) => (
                     <Card
                       key={i}
-                      wordData={wordData.at(-1)!}
+                      wordData={wordData.at(preview)!}
                       cardType={cardType}
                     />
                   ),
@@ -137,7 +140,13 @@ export default function App() {
               </thead>
               <tbody>
                 {wordData.map((word, i) => (
-                  <tr key={i} className="border-b border-[#404040]">
+                  <tr
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreview(i);
+                    }}
+                    className="border-b border-[#404040] opacity-80 hover:opacity-100 cursor-pointer">
                     <td className="p-1">{word.word || word.reading_word}</td>
                     <td className="p-1">{word.reading_word}</td>
                     <td className="p-1">{word.english_word}</td>
