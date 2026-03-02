@@ -49,6 +49,10 @@ const synthesize = async (ttsText: string) => {
   return audio;
 };
 
+// BUG: Tatoeba sometimes responds with a word not a sentence...
+// TODO: Add an OpenAI api fallback for the sentence if Tatoeba fails to return a sentence.
+// TODO: Randomise the response instead of always getting the first sentence.
+
 app.post("/getData", async (req, res) => {
   try {
     // Get Jisho (Word)
@@ -56,23 +60,24 @@ app.post("/getData", async (req, res) => {
     const jishoParsed = await jishoRes.json();
     const jishoObj: Jisho = jishoParsed.data[0];
 
-    // TODO: Tatoeba sometimes responds with a word not a sentence...
-    // TODO: Add an OpenAI api fallback for the sentence if Tatoeba fails to return a sentence.
-    // TODO: Randomise the response instead of always getting the first sentence.
     // Get Tateoba (Sentence)
     const resolvedWord = jishoObj.japanese[0].word || jishoObj.japanese[0].reading;
     const tatoebaRes = await fetch(
       `${TATOEBA_API}/v1/sentences?q=${resolvedWord}&lang=jpn&sort=relevance&showtrans:lang=eng&include=transcriptions`,
     );
     const tatoebaParsed = await tatoebaRes.json();
-    const tatoebaObj: Tatoeba = tatoebaParsed.data[0];
+    // Skip sentences where resolvedWord is followed by another kanji (compound word e.g. 家内)
+    const tatoebaObj: Tatoeba =
+      tatoebaParsed.data.find((s: Tatoeba) =>
+        new RegExp(`${resolvedWord}(?![\\u4E00-\\u9FFF])`).test(s.text),
+      ) ?? tatoebaParsed.data[0];
 
     //Get TTS
     const audioWord = await synthesize(jishoObj.japanese[0].reading);
     const audioSentence = await synthesize(tatoebaObj.text);
 
     // Format Data
-    const cleanWord = jishoObj.japanese[0].word;
+    const cleanWord = jishoObj.japanese[0].word || jishoObj.japanese[0].reading;
     const cleanEnSentence = tatoebaObj.translations[0].text;
     const cleanJlpt = jishoObj.jlpt.join(", ");
     const cleanReadingWord = jishoObj.japanese[0].reading;
